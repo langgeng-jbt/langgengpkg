@@ -3,7 +3,6 @@ package dbmicro
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/langgeng-jbt/langgengpkg/contextwrap"
@@ -29,8 +28,6 @@ func (d *DBmicro) QueryContext(ctx context.Context, query string, args ...interf
 	start := time.Now()
 	trOri := contextwrap.GetTraceFromContext(ctx)
 
-	fmt.Println("trori", trOri)
-
 	rows, err := d.db.QueryContext(ctx, query, args...)
 
 	tr := &trace.TraceDatabase{
@@ -51,7 +48,6 @@ func (d *DBmicro) QueryContext(ctx context.Context, query string, args ...interf
 func (d *DBmicro) ExecContext(ctx context.Context, query string, args ...interface{}) (context.Context, sql.Result, error) {
 	start := time.Now()
 	trOri := contextwrap.GetTraceFromContext(ctx)
-	fmt.Println("trori2", trOri)
 
 	rows, err := d.db.ExecContext(ctx, query, args...)
 
