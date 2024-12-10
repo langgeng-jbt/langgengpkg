@@ -49,26 +49,31 @@ func (h *middlewareImpl) DumbMiddleware(next http.Handler) http.Handler {
 
 func (h *middlewareImpl) BodyReader(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("AHOYYY")
 		start := time.Now()
+		switch r.Method {
+		case http.MethodGet:
+			ctx := context.WithValue(r.Context(), contextwrap.ElapsedKey, start)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		default:
+			defer r.Body.Close()
+			var i interface{}
+			var body []byte
+			decoder := json.NewDecoder(r.Body)
+			err := decoder.Decode(&i)
+			if err != nil {
+				//no body or empty body maybe
+				return
+			} else {
+				body, _ = json.Marshal(i)
+				// // And now set a new body, which will simulate the same data we read:
+				r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+			}
 
-		defer r.Body.Close()
-		var i interface{}
-		var body []byte
-		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&i)
-		if err != nil {
-			//no body or empty body maybe
-			return
-		} else {
-			body, _ = json.Marshal(i)
-			// // And now set a new body, which will simulate the same data we read:
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+			ctx := context.WithValue(r.Context(), contextwrap.BodyKey, body)
+			ctx = context.WithValue(ctx, contextwrap.ElapsedKey, start)
+			next.ServeHTTP(w, r.WithContext(ctx))
+
 		}
-
-		ctx := context.WithValue(r.Context(), contextwrap.BodyKey, body)
-		ctx = context.WithValue(ctx, contextwrap.ElapsedKey, start)
-		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
