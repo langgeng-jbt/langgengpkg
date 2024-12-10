@@ -77,6 +77,8 @@ func (c *HttpMicroImpl) Call(ctx context.Context, requestBody map[string]interfa
 
 	currentTrace = append(currentTrace, tr)
 
+	fmt.Println("current trace ", currentTrace)
+
 	ctx = context.WithValue(ctx, contextwrap.TraceKey, currentTrace)
 
 	// check for valid json response
