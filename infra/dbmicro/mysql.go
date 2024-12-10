@@ -50,6 +50,12 @@ func NewMysql(user, pass, host, dbname string, maxIdleConns, maxOpenConns, connM
 		panic("fail to connect to database")
 	}
 
+	err = db.Ping()
+	if err != nil {
+		log.LogDebug("ping fail : " + err.Error())
+		panic("fail to connect to database")
+	}
+
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
 	db.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Minute)
