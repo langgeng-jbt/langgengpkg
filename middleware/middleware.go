@@ -49,6 +49,7 @@ func (h *middlewareImpl) DumbMiddleware(next http.Handler) http.Handler {
 
 func (h *middlewareImpl) BodyReader(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("AHOYYY")
 		start := time.Now()
 
 		defer r.Body.Close()
