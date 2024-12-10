@@ -89,6 +89,7 @@ func (c *HttpMicroImpl) Call(ctx context.Context, requestBody map[string]interfa
 	}
 
 	tr.Response = log.Minify(js)
+	response.Header.Add("statusCode", response.Status)
 
 	return ctx, responseByte, response.Header, nil
 }
