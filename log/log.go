@@ -130,15 +130,15 @@ func LogRespBasic(param *entity.Responselog) {
 	timestamp := setLogFile(0)
 	mapResponse := Minify(param.ResponseBody)
 	logJSON.WithFields(logrus.Fields{
-		"service":         serviceName,
-		"http_type":       httpResponse,
-		"response_header": param.ResponseHeader,
-		"response_body":   mapResponse,
-		"response_code":   param.ResponseCode,
-		"trace":           param.Trace,
-		"timestamp":       timestamp,
-		"elapsed":         param.Elapsed,
-	}).Info(httpResponse)
+		"service":       serviceName,
+		"outbound_type": httpResponse,
+		"outbound_info": param.ResponseHeader,
+		"outbound_body": mapResponse,
+		"response_code": param.ResponseCode,
+		"trace":         param.Trace,
+		"timestamp":     timestamp,
+		"elapsed":       param.Elapsed,
+	}).Info("OUTBOUND")
 }
 
 func LogDebug(msg string) {
