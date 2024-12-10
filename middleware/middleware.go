@@ -93,40 +93,62 @@ func (h *middlewareImpl) GeneratePid(next http.Handler) http.Handler {
 
 func (h *middlewareImpl) Setup(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if contentType := r.Header.Get("Content-Type"); contentType != "application/json" {
-			_ = json.NewEncoder(w).Encode("Content type not supported")
-			return
-		}
-
-		body := contextwrap.GetBodyFromContext(r.Context())
-
 		var data interface{}
-		reqbody := map[string]interface{}{}
-
-		_ = json.Unmarshal(body, &reqbody)
-
-		reqbody["request_id"] = contextwrap.GetProcessIDFromContext(r.Context())
-
-		data = reqbody
-
-		trxType, endpath := extractTrxType(r.URL)
-
-		if endpath == "healthz" {
-			return
-		}
-
 		var inboundInfo interface{}
-		inboundInfo = r.Header
-		log.LogInbound(trxType, &data, &inboundInfo)
 
-		ctx := context.WithValue(r.Context(), contextwrap.TrxTypeKey, trxType)
-		ctx = context.WithValue(ctx, contextwrap.IpAddressSourceKey, r.Header.Get("IP-Address"))
-		ctx = context.WithValue(ctx, contextwrap.AgentKey, r.Header.Get("User-Agent"))
+		switch r.Method {
+		case http.MethodGet:
+			trxType, endpath := extractTrxType(r.URL)
 
-		// transaction := apm.TransactionFromContext(ctx)
-		// transaction.Context.SetCustom("request_data", data)
+			if endpath == "healthz" {
+				return
+			}
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+			inboundInfo = r.Header
+			log.LogInbound(trxType, &data, &inboundInfo)
+
+			ctx := context.WithValue(r.Context(), contextwrap.TrxTypeKey, trxType)
+			ctx = context.WithValue(ctx, contextwrap.IpAddressSourceKey, r.Header.Get("IP-Address"))
+			ctx = context.WithValue(ctx, contextwrap.AgentKey, r.Header.Get("User-Agent"))
+
+			// transaction := apm.TransactionFromContext(ctx)
+			// transaction.Context.SetCustom("request_data", data)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		default:
+			if contentType := r.Header.Get("Content-Type"); contentType != "application/json" {
+				_ = json.NewEncoder(w).Encode("Content type not supported")
+				return
+			}
+
+			body := contextwrap.GetBodyFromContext(r.Context())
+
+			reqbody := map[string]interface{}{}
+
+			_ = json.Unmarshal(body, &reqbody)
+
+			reqbody["request_id"] = contextwrap.GetProcessIDFromContext(r.Context())
+
+			data = reqbody
+
+			trxType, endpath := extractTrxType(r.URL)
+
+			if endpath == "healthz" {
+				return
+			}
+
+			inboundInfo = r.Header
+			log.LogInbound(trxType, &data, &inboundInfo)
+
+			ctx := context.WithValue(r.Context(), contextwrap.TrxTypeKey, trxType)
+			ctx = context.WithValue(ctx, contextwrap.IpAddressSourceKey, r.Header.Get("IP-Address"))
+			ctx = context.WithValue(ctx, contextwrap.AgentKey, r.Header.Get("User-Agent"))
+
+			// transaction := apm.TransactionFromContext(ctx)
+			// transaction.Context.SetCustom("request_data", data)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
 	})
 }
 
