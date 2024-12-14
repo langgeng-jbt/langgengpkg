@@ -17,7 +17,7 @@ import (
 
 type HttpMicro interface {
 	Call(ctx context.Context, requestBody map[string]interface{}, header http.Header, path string, method string) (context.Context, []byte, http.Header, error)
-	// GenerateHeaderLivvik(body, clientID, clientKey string) http.Header
+	CallForm(ctx context.Context, formData url.Values, header http.Header, path string, method string) (context.Context, []byte, http.Header, error)
 	// GenerateHeaderGenMicro(device *entity.Device, ipSource, agent string) http.Header
 }
 
