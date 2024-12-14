@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/langgeng-jbt/langgengpkg/basicdto/trace"
@@ -72,6 +73,62 @@ func (c *HttpMicroImpl) Call(ctx context.Context, requestBody map[string]interfa
 	tr := &trace.TraceHttp{
 		Url:     c.baseUrl + path,
 		Request: log.Minify(requestBody),
+		Elapsed: elapsed,
+	}
+
+	currentTrace = append(currentTrace, tr)
+
+	ctx = context.WithValue(ctx, contextwrap.TraceKey, currentTrace)
+
+	// check for valid json response
+	var js map[string]interface{}
+	err = json.Unmarshal(responseByte, &js)
+	if err != nil {
+		// log.LogWarn("invalid json", "invalid json")
+		// return ctx, nil, nil, err
+		fmt.Println("response body not in json format")
+	}
+
+	tr.Response = log.Minify(js)
+	response.Header.Add("statusCode", response.Status)
+
+	return ctx, responseByte, response.Header, nil
+}
+
+func (c *HttpMicroImpl) CallForm(ctx context.Context, formData url.Values, header http.Header, path string, method string) (context.Context, []byte, http.Header, error) {
+	start := time.Now()
+
+	// Encode form data
+	data := formData.Encode()
+	payload := bytes.NewBufferString(data)
+
+	currentTrace := contextwrap.GetTraceFromContext(ctx)
+
+	request, err := http.NewRequest(method, c.baseUrl+path, payload)
+	if err != nil {
+		return ctx, nil, nil, err
+	}
+
+	request.Header = header
+
+	response, err := c.httpc.Do(request.WithContext(ctx))
+	if err != nil {
+		return ctx, nil, nil, err
+	}
+
+	defer response.Body.Close()
+
+	responseByte, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		//log.LogWarn(err.Error(), "read esb response")
+		return ctx, nil, nil, err
+	}
+
+	elapsed := time.Since(start).String()
+
+	tr := &trace.TraceHttp{
+		Url: c.baseUrl + path,
+		//Request: log.Minify(requestBody),
 		Elapsed: elapsed,
 	}
 
